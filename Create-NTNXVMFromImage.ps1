@@ -18,7 +18,7 @@ if(!$connection.IsConnected){
     $NutanixCluster = (Read-Host "Nutanix Cluster")
     $NutanixClusterUsername = (Read-Host "Username for $NutanixCluster")
     $NutanixClusterPassword = (Read-Host "Password for $NutanixCluster" -AsSecureString)
-    $connection = Connect-NutanixCluster -server $NutanixCluster -username $NutanixClusterUsername -password $NutanixClusterPassword –AcceptInvalidSSLCerts
+    $connection = Connect-NutanixCluster -server $NutanixCluster -username $NutanixClusterUsername -password $NutanixClusterPassword -AcceptInvalidSSLCerts
     if ($connection.IsConnected){
         #connection success
         Write-Host "Connected to $($connection.server)" -ForegroundColor Green
