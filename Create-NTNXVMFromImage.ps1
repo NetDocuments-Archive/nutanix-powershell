@@ -51,7 +51,7 @@ if (!(Get-NTNXVM -SearchString $VM.Name).vmid){
     $diskImage = (Get-NTNXImage | ?{$_.name -eq $NutanixImage})
     if($diskImage){$diskCloneSpec.vmDiskUuid = $diskImage.vmDiskId}
     else{
-        Write-Warning "Specified Image: $NutanixImage, does not exist in the Image Store, exiting"
+        Write-Warning "Specified Image Name: $NutanixImage, does not exist in the Image Store, exiting"
         Break
     }
     #setup the new disk from the Cloned Image
@@ -92,6 +92,6 @@ if (!(Get-NTNXVM -SearchString $VM.Name).vmid){
     }
 }
 else{
-    Write-Host "$($VM.Name) already exists on $($connection.server), exiting"
+    Write-Host "$VMName) already exists on $($connection.server), exiting"
     Break
 }
