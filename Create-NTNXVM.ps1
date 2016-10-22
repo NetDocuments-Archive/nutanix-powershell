@@ -1,4 +1,4 @@
-#Create-NTNXVMFromImage.ps1
+#Create-NTNXVM.ps1
 param(
     [Parameter(mandatory=$true)][String]$VMName,
     [Parameter(mandatory=$true)][Int]$VMVLANID,
@@ -67,11 +67,11 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
         $vmDisk.vmDiskClone = $diskCloneSpec
     }
     elseif($CloneExistingVMDisk -and $ExistingVMName){
-        #setup the image to clone from the Image Store
+        #setup the image to clone from the Existing VM
         $diskCloneSpec = New-NTNXObject -Name VMDiskSpecCloneDTO
-        #check to make sure specified Image exists in the Image Store
+        #check to make sure specified Existing VM Exists
         $diskToClone = ((Get-NTNXVMDisk -Vmid (Get-NTNXVM -searchstring $ExistingVMName).vmId) | ? {!$_.isCdrom})
-        if($diskImage){$diskCloneSpec.vmDiskUuid = $diskToClone.VmDiskUuid}
+        if($diskToClone){$diskCloneSpec.vmDiskUuid = $diskToClone.VmDiskUuid}
         else{
             Write-Warning "Specified Existing VM Name: $ExistingVMName, does not exist, exiting"
             Break
@@ -81,20 +81,20 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
         $vmDisk.vmDiskClone = $diskCloneSpec
     }
     elseif($UseBlankDisk -and $DiskSizeGB){
-        #setup the SCSI disk
+        #setup the new disk on the default container
         $diskCreateSpec = New-NTNXObject -Name VmDiskSpecCreateDTO
         $diskCreateSpec.containerUuid = (Get-NTNXContainer).containerUuid
         $diskCreateSpec.sizeMb = $DiskSizeGB * 1024
-        # Creating the Disk
+        #create the Disk
         $vmDisk =  New-NTNXObject -Name VMDiskDTO
         $vmDisk.vmDiskCreate = $diskCreateSpec
         if($MountISO){
             #setup the ISO image to clone from the Image Store
             $diskCloneSpec = New-NTNXObject -Name VMDiskSpecCloneDTO
-            #check to make sure specified Image exists in the Image Store
-            $diskImage = (Get-NTNXImage | ?{$_.name -eq $ISOName})
-            if($diskImage){
-                $diskCloneSpec.vmDiskUuid = $diskImage.vmDiskId
+            #check to make sure specified ISO exists in the Image Store
+            $ISOImage = (Get-NTNXImage | ?{$_.name -eq $ISOName})
+            if($ISOImage){
+                $diskCloneSpec.vmDiskUuid = $ISOImage.vmDiskId
                 #setup the new ISO disk from the Cloned Image
                 $vmISODisk = New-NTNXObject -Name VMDiskDTO
                 #specify that this is a Cdrom
