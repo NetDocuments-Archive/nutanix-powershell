@@ -3,15 +3,15 @@ param(
     [Parameter(mandatory=$true)][String]$VMName,
     [Parameter(mandatory=$true)][Int]$VMVLANID,
     [Parameter(mandatory=$true)][Int64]$VMRAMGB,
-    [Parameter(mandatory=$false)][Int]$VMVcpus = 1,
-    [Parameter(mandatory=$false)][Int]$VMCoresPerVcpu = 1,
+    [Parameter(mandatory=$false)][Int]$VMVcpus = 1, #default to 1
+    [Parameter(mandatory=$false)][Int]$VMCoresPerVcpu = 1, #default to 1
     [Parameter(mandatory=$false)][String]$VMIP,
     [Parameter(ParameterSetName='Image')][Switch]$UseImageStore,
     [Parameter(ParameterSetName='Image')][String]$ImageName,
     [Parameter(ParameterSetName='CloneVM')][Switch]$CloneExistingVMDisk,
     [Parameter(ParameterSetName='CloneVM')][String]$ExistingVMName,
     [Parameter(ParameterSetName='BlankVM')][Switch]$UseBlankDisk,
-    [Parameter(ParameterSetName='BlankVM')][Int]$DiskSizeGB,
+    [Parameter(ParameterSetName='BlankVM')][Int]$DiskSizeGB = 20, #default to 20GB if not specified
     [Parameter(ParameterSetName='BlankVM')][Switch]$MountISO,
     [Parameter(ParameterSetName='BlankVM')][String]$ISOName,
     [Parameter(mandatory=$false)][Switch]$noPowerOn
@@ -80,7 +80,7 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
         $vmDisk = New-NTNXObject -Name VMDiskDTO
         $vmDisk.vmDiskClone = $diskCloneSpec
     }
-    elseif($UseBlankDisk -and $DiskSizeGB){
+    elseif($UseBlankDisk){
         #setup the new disk on the default container
         $diskCreateSpec = New-NTNXObject -Name VmDiskSpecCreateDTO
         $diskCreateSpec.containerUuid = (Get-NTNXContainer).containerUuid
@@ -108,8 +108,18 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
         }
     }
     else{
-        Write-Warning "No source for $VMName's disk, must specify one of the following (UseImageStore, CloneExistingVM, UseBlankDisk), exiting"
-        Break
+        if($UseImageStore -and !$ImageName){
+            Write-Warning "Must specify an ImageName when using -UseImageStore, exiting"
+            Break
+        }
+        elseif($CloneExistingVM -and !$ExistingVMName){
+            Write-Warning "Must specify an ExistingVMName to clone when using -CloneExistingVM, exiting"
+            Break
+        }
+        else{
+            Write-Warning "No source for $VMName's disk, must specify one of the following (UseImageStore, CloneExistingVM, UseBlankDisk), exiting"
+            Break
+        }
     }
     #Create the VM
     Write-Host "Creating $VMName on $($connection.server)..."
