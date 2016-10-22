@@ -5,9 +5,9 @@ Example 1: Create a VM with 4GB of RAM, 2 Vcpus with 2 cores each and clone the 
 ````Powershell
 .\Create-NTNXVM.ps1 -VMName "test01" -VMVLANID 1 -VMRAMGB 4 -VMVcpus 2 -VMCoresPerVcpu 2 -VMIP "10.1.1.180" -UseImageStore -ImageName "win2012"
 ````
-Example 2: Create a VM with 2GB of RAM, 1 Vcpu with 4 cores and clone the disk from the existing VM called "test01", don't power the VM on after creating it (will need to power it manually from Prism).
+Example 2: Create a VM with 2GB of RAM, 1 Vcpu (default) with 4 cores and clone the disk from the existing VM called "test01", don't power the VM on after creating it (will need to power it manually from Prism).
 ````Powershell
-.\Create-NTNXVM.ps1 -VMName "test02" -VMVLANID 1 -VMRAMGB 2 -VMVcpus 1 -VMCoresPerVcpu 4 -VMIP "10.1.1.180" -CloneExistingVM -ExistingVMName "test01" -noPowerOn
+.\Create-NTNXVM.ps1 -VMName "test02" -VMVLANID 1 -VMRAMGB 2 -VMCoresPerVcpu 4 -VMIP "10.1.1.180" -CloneExistingVM -ExistingVMName "test01" -noPowerOn
 ````
 Example 3: Create a VM with 2GB of RAM, 2 Vcpus (they will get 1 core each by default) and create a new blank 100GB disk. Also, don't specify an IP address for this VM (it will need to get a static IP later).
 ````Powershell
