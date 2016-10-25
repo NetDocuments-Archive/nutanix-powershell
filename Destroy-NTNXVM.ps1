@@ -3,15 +3,17 @@
 param(
     [Parameter(mandatory=$true)][String]$VMName,
     [Parameter(mandatory=$false)][String]$DNSServer,
-    [Parameter(mandatory=$false)][String]$DNSZone
+    [Parameter(mandatory=$false)][String]$DNSZone,
+    [Parameter(mandatory=$false)][String]$ClusterName
 )
 #first check if the NutanixCmdletsPSSnapin is loaded, load it if its not, Stop script if it fails to load
 if ( (Get-PSSnapin -Name NutanixCmdletsPSSnapin -ErrorAction SilentlyContinue) -eq $null ) {Add-PsSnapin NutanixCmdletsPSSnapin -ErrorAction Stop}
 $connection = Get-NutanixCluster
-#if not already connected to a cluster
 if(!$connection.IsConnected){
-    #prompt for inputs on the cluster/username/password to connect
-    $NutanixCluster = (Read-Host "Nutanix Cluster")
+    #if not already connected to a cluster, prompt for inputs on the cluster/username/password to connect
+    #if the ClusterName Parameter is passed, connect to that cluster, otherwise prompt for the clustername
+    if($ClusterName){$NutanixCluster = $ClusterName}
+    else{$NutanixCluster = (Read-Host "Nutanix Cluster")}
     $NutanixClusterUsername = (Read-Host "Username for $NutanixCluster")
     $NutanixClusterPassword = (Read-Host "Password for $NutanixCluster" -AsSecureString)
     $connection = Connect-NutanixCluster -server $NutanixCluster -username $NutanixClusterUsername -password $NutanixClusterPassword -AcceptInvalidSSLCerts
@@ -23,6 +25,27 @@ if(!$connection.IsConnected){
         #connection failure, stop script
         Write-Warning "Failed to connect to $NutanixCluster"
         Break
+    }
+}
+else{
+    #make sure we're connected to the right cluster
+    if($ClusterName -and ($ClusterName -ne $($connection.server))){
+        #we're connected to the wrong cluster, reconnect to the right one
+        Disconnect-NTNXCluster $connection.server
+        $connection = Get-NutanixCluster
+        $NutanixCluster = $ClusterName
+        $NutanixClusterUsername = (Read-Host "Username for $NutanixCluster")
+        $NutanixClusterPassword = (Read-Host "Password for $NutanixCluster" -AsSecureString)
+        $connection = Connect-NutanixCluster -server $NutanixCluster -username $NutanixClusterUsername -password $NutanixClusterPassword -AcceptInvalidSSLCerts
+        if ($connection.IsConnected){
+            #connection success
+            Write-Host "Connected to $($connection.server)" -ForegroundColor Green
+        }
+        else{
+            #connection failure, stop script
+            Write-Warning "Failed to connect to $NutanixCluster"
+            Break
+        }
     }
 }
 #connection to cluster is all set up, now move on to the fun stuff
