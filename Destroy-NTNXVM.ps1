@@ -1,4 +1,5 @@
 #Destroy-NTNXVM.ps1
+#   Copyright 2016 NetVoyage Corporation d/b/a NetDocuments.
 param(
     [Parameter(mandatory=$true)][String]$VMName,
     [Parameter(mandatory=$false)][String]$DNSServer,
