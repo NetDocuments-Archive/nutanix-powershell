@@ -24,3 +24,4 @@ Throw all the "test" VMs away. For "test02" and "test04" assume this VM got adde
 .\Destroy-NTNXVM.ps1 -VMName "test03"
 .\Destroy-NTNXVM.ps1 -VMName "test04" -DNSServer "dc01" -DNSZone "mydomain.local"
 ````
+Copyright 2016 NetVoyage Corporation d/b/a NetDocuments.
