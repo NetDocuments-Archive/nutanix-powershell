@@ -9,6 +9,7 @@ param(
     [Parameter(mandatory=$false)][String]$VMIP,
     [Parameter(ParameterSetName='Image')][Switch]$UseImageStore,
     [Parameter(ParameterSetName='Image')][String]$ImageName,
+    [Parameter(ParameterSetName='Image')]$AdditionalVolumes, #pass an array of key:values
     [Parameter(ParameterSetName='CloneVM')][Switch]$CloneExistingVMDisk,
     [Parameter(ParameterSetName='CloneVM')][String]$ExistingVMName,
     [Parameter(ParameterSetName='BlankVM')][Switch]$UseBlankDisk,
@@ -90,6 +91,17 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
         #setup the new disk from the Cloned Image
         $vmDisk = New-NTNXObject -Name VMDiskDTO
         $vmDisk.vmDiskClone = $diskCloneSpec
+        if($AdditionalVolumes){
+            $vmDisk = @($vmDisk)
+            foreach($volume in $AdditionalVolumes){
+                $diskCreateSpec = New-NTNXObject -Name VmDiskSpecCreateDTO
+                $diskCreateSpec.containerUuid = (Get-NTNXContainer).containerUuid
+                $diskCreateSpec.sizeMb = $volume.Size * 1024
+                $AdditionalvmDisk = New-NTNXObject -Name VMDiskDTO
+                $AdditionalvmDisk.vmDiskCreate = $diskCreateSpec
+                $vmDisk += $AdditionalvmDisk
+            }
+        }
     }
     elseif($CloneExistingVMDisk -and $ExistingVMName){
         #setup the image to clone from the Existing VM
