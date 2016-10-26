@@ -9,13 +9,13 @@ param(
     [Parameter(mandatory=$false)][String]$VMIP,
     [Parameter(ParameterSetName='Image')][Switch]$UseImageStore,
     [Parameter(ParameterSetName='Image')][String]$ImageName,
-    [Parameter(ParameterSetName='Image')]$AdditionalVolumes, #pass an array of key:values
     [Parameter(ParameterSetName='CloneVM')][Switch]$CloneExistingVMDisk,
     [Parameter(ParameterSetName='CloneVM')][String]$ExistingVMName,
     [Parameter(ParameterSetName='BlankVM')][Switch]$UseBlankDisk,
     [Parameter(ParameterSetName='BlankVM')][Int]$DiskSizeGB = 20, #default to 20GB if not specified
     [Parameter(ParameterSetName='BlankVM')][Switch]$MountISO,
     [Parameter(ParameterSetName='BlankVM')][String]$ISOName,
+    [Parameter(mandatory=$false)]$AdditionalVolumes, #pass an array of key:values
     [Parameter(mandatory=$false)][Switch]$noPowerOn,
     [Parameter(mandatory=$false)][String]$ClusterName
 )
@@ -78,6 +78,8 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
     }
     #request an IP, if specified
     if($VMIP){$nicSpec.requestedIpAddress = $VMIP}
+    #setup the VM's disk
+    $vmDisk = New-NTNXObject -Name VMDiskDTO
     if($UseImageStore -and $ImageName){
         #setup the image to clone from the Image Store
         $diskCloneSpec = New-NTNXObject -Name VMDiskSpecCloneDTO
@@ -89,19 +91,7 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
             Break
         }
         #setup the new disk from the Cloned Image
-        $vmDisk = New-NTNXObject -Name VMDiskDTO
         $vmDisk.vmDiskClone = $diskCloneSpec
-        if($AdditionalVolumes){
-            $vmDisk = @($vmDisk)
-            foreach($volume in $AdditionalVolumes){
-                $diskCreateSpec = New-NTNXObject -Name VmDiskSpecCreateDTO
-                $diskCreateSpec.containerUuid = (Get-NTNXContainer).containerUuid
-                $diskCreateSpec.sizeMb = $volume.Size * 1024
-                $AdditionalvmDisk = New-NTNXObject -Name VMDiskDTO
-                $AdditionalvmDisk.vmDiskCreate = $diskCreateSpec
-                $vmDisk += $AdditionalvmDisk
-            }
-        }
     }
     elseif($CloneExistingVMDisk -and $ExistingVMName){
         #setup the image to clone from the Existing VM
@@ -114,7 +104,6 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
             Break
         }
         #setup the new disk from the Cloned Existing VM
-        $vmDisk = New-NTNXObject -Name VMDiskDTO
         $vmDisk.vmDiskClone = $diskCloneSpec
     }
     elseif($UseBlankDisk){
@@ -123,8 +112,8 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
         $diskCreateSpec.containerUuid = (Get-NTNXContainer).containerUuid
         $diskCreateSpec.sizeMb = $DiskSizeGB * 1024
         #create the Disk
-        $vmDisk =  New-NTNXObject -Name VMDiskDTO
         $vmDisk.vmDiskCreate = $diskCreateSpec
+        if($AdditionalVolumes -or $MountISO){$vmDisk = @($vmDisk)}
         if($MountISO){
             #setup the ISO image to clone from the Image Store
             $diskCloneSpec = New-NTNXObject -Name VMDiskSpecCloneDTO
@@ -137,7 +126,8 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
                 #specify that this is a Cdrom
                 $vmISODisk.isCdrom = $true
                 $vmISODisk.vmDiskClone = $diskCloneSpec
-                $vmDisk = @($vmDisk,$vmISODisk)
+                $vmDisk = @($vmDisk)
+                $vmDisk += $vmISODisk
             }
             else{
                 Write-Warning "Specified ISO Image Name: $ISOName, does not exist in the Image Store, skipping ISO mounting"
@@ -158,6 +148,19 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
             Break
         }
     }
+    #adds any AdditionalVolumes if specified
+    if($AdditionalVolumes){
+        if(!($vmDisk[1])){$vmDisk = @($vmDisk)}
+        foreach($volume in $AdditionalVolumes){
+            $diskCreateSpec = New-NTNXObject -Name VmDiskSpecCreateDTO
+            $diskCreateSpec.containerUuid = (Get-NTNXContainer).containerUuid
+            $diskCreateSpec.sizeMb = $volume.Size * 1024
+            $AdditionalvmDisk = New-NTNXObject -Name VMDiskDTO
+            $AdditionalvmDisk.vmDiskCreate = $diskCreateSpec
+            $vmDisk += $AdditionalvmDisk
+        }
+    }
+
     #Create the VM
     Write-Host "Creating $VMName on $($connection.server)..."
     $createJobID = New-NTNXVirtualMachine -MemoryMb $ramMB -Name $VMName -NumVcpus $VMVcpus -NumCoresPerVcpu $VMCoresPerVcpu -VmNics $nicSpec -VmDisks $vmDisk -ErrorAction Continue
