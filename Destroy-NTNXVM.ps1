@@ -2,9 +2,6 @@
 #   Copyright 2016 NetVoyage Corporation d/b/a NetDocuments.
 param(
     [Parameter(mandatory=$true)][String]$VMName,
-    [Parameter(mandatory=$false)][String]$DNSServer,
-    [Parameter(mandatory=$false)][String]$DNSZone,
-    [Parameter(mandatory=$false)][Switch]$RemoveFromAD,
     [Parameter(mandatory=$false)][String]$ClusterName
 )
 #first check if the NutanixCmdletsPSSnapin is loaded, load it if its not, Stop script if it fails to load
@@ -60,26 +57,6 @@ if ($VM.vmid){
     else{
         Write-Warning "Failed to remove $VMName from $($connection.server), exiting"
         Break
-    }
-    #if the DNSServer and DNSZone parameters are specified, try to remove the DNS entry
-    if($DNSServer -and $DNSZone){
-        try{
-            Write-Host "Remove DNS record for $VMName, if exists"
-            Remove-DnsServerResourceRecord -ComputerName $DNSServer -ZoneName $DNSZone -Name $VMName -Force -RRType A
-        }
-        catch {
-            Write-Warning "Failed to remove $VMName from DNS, manual cleanup may be required"
-        }
-    }
-    #if the RemoveFromAD switch is passed, attempt AD removal
-    if($RemoveFromAD){
-        try{
-            Write-Host "Removing $VMName from Domain, if exists"
-            Get-ADComputer -Identity $VMName | Remove-ADObject -Recursive -Confirm:$false
-        }
-        catch{
-            Write-Warning "Failed to remove $VMName from Active Directory, manual cleanup may be required"
-        }
     }
 }
 else{

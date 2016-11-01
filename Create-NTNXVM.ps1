@@ -17,7 +17,8 @@ param(
     [Parameter(ParameterSetName='BlankVM')][String]$ISOName,
     [Parameter(mandatory=$false)]$AdditionalVolumes, #pass an array of key:values
     [Parameter(mandatory=$false)][Switch]$noPowerOn,
-    [Parameter(mandatory=$false)][String]$ClusterName
+    [Parameter(mandatory=$false)][String]$ClusterName,
+    [Parameter(mandatory=$false)][String]$Description
 )
 #first check if the NutanixCmdletsPSSnapin is loaded, load it if its not, Stop script if it fails to load
 if ( (Get-PSSnapin -Name NutanixCmdletsPSSnapin -ErrorAction SilentlyContinue) -eq $null ) {Add-PsSnapin NutanixCmdletsPSSnapin -ErrorAction Stop}
@@ -163,7 +164,7 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
 
     #Create the VM
     Write-Host "Creating $VMName on $($connection.server)..."
-    $createJobID = New-NTNXVirtualMachine -MemoryMb $ramMB -Name $VMName -NumVcpus $VMVcpus -NumCoresPerVcpu $VMCoresPerVcpu -VmNics $nicSpec -VmDisks $vmDisk -ErrorAction Continue
+    $createJobID = New-NTNXVirtualMachine -MemoryMb $ramMB -Name $VMName -NumVcpus $VMVcpus -NumCoresPerVcpu $VMCoresPerVcpu -VmNics $nicSpec -VmDisks $vmDisk -Description $Description -ErrorAction Continue
     if($createJobID){Write-Host "Created $VMName on $($connection.server)" -ForegroundColor Green}
     else{
         Write-Warning "Couldn't create $VMName on $($connection.server), exiting"
@@ -196,6 +197,6 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
     }
 }
 else{
-    Write-Host "$VMName) already exists on $($connection.server), exiting"
+    Write-Host "$VMName already exists on $($connection.server), exiting"
     Break
 }
