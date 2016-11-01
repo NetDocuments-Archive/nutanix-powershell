@@ -17,11 +17,11 @@ Example 4: Create a VM with 4GB of RAM and 8 cores (all 8 cores will be on 1 Vcp
 ````Powershell
 .\Create-NTNXVM.ps1 -VMName "test04" -VMVLANID 1 -VMRAMGB 4 -VMCoresPerVcpu 8 -VMIP "10.1.1.180" -UseBlankDisk -DiskSizeGB 50 -MountISO -ISOName "Windows Server 2012 R2"
 ````
-Throw all the "test" VMs away. For "test02" assume this VM got added to DNS and the DNS entry needs to be cleaned up. For "test04" assume this VM got added to a Domain and needs cleaned up.
+Throw all the "test" VMs away.
 ````Powershell
 .\Destroy-NTNXVM.ps1 -VMName "test01"
-.\Destroy-NTNXVM.ps1 -VMName "test02" -DNSServer "dc03" -DNSZone "yourdomain.local"
+.\Destroy-NTNXVM.ps1 -VMName "test02"
 .\Destroy-NTNXVM.ps1 -VMName "test03"
-.\Destroy-NTNXVM.ps1 -VMName "test04" -DNSServer "dc01" -DNSZone "mydomain.local" -RemoveFromAD
+.\Destroy-NTNXVM.ps1 -VMName "test04"
 ````
 Copyright 2016 NetVoyage Corporation d/b/a NetDocuments.
