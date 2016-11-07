@@ -85,7 +85,17 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
         #setup the image to clone from the Image Store
         $diskCloneSpec = New-NTNXObject -Name VMDiskSpecCloneDTO
         #check to make sure specified Image exists in the Image Store
-        $diskImage = (Get-NTNXImage | ?{$_.name -eq $ImageName})
+        if($diskImage){
+            #the following 7 lines of code select the lastest image if there are multiple images of the same name
+            if($diskImage.Length -gt 1){
+                $diskToUse = $diskImage[0]
+                foreach($disk in $diskImage){
+                    if($disk.updatedTimeInUsecs -gt $diskToUse.updatedTimeInUsecs){ $diskToUse = $disk }
+                }
+                $diskImage = $diskToUse
+            }
+            $diskCloneSpec.vmDiskUuid = $diskImage.vmDiskId
+        }
         if($diskImage){$diskCloneSpec.vmDiskUuid = $diskImage.vmDiskId}
         else{
             Write-Warning "Specified Image Name: $ImageName, does not exist in the Image Store, exiting"
