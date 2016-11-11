@@ -21,9 +21,12 @@ param(
     [Parameter(mandatory=$false)][String]$Description
 )
 #dot source Connect-Nutanix.ps1 and connect to the cluster
-. .\Connect-Nutanix.ps1
+. .\lib\Connect-Nutanix.ps1
 if ($ClusterName){ $connection = (Connect-Nutanix -ClusterName $ClusterName) }
-else { $connection = (Connect-Nutanix) }
+else {
+    $connection = (Connect-Nutanix)
+    $ClusterName = (Get-NutanixCluster).server
+}
 if (!$connection){
     Write-Warning "Couldn't connect to a Nutanix Cluster"
     exit 1
@@ -50,8 +53,8 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
         #setup the image to clone from the Image Store
         $diskCloneSpec = New-NTNXObject -Name VMDiskSpecCloneDTO
         #check to make sure specified Image exists in the Image Store
+        $diskImage = (Get-NTNXImage | ?{$_.name -eq $ImageName})
         if($diskImage){
-            #the following 7 lines of code select the lastest image if there are multiple images of the same name
             if($diskImage.Length -gt 1){
                 $diskToUse = $diskImage[0]
                 foreach($disk in $diskImage){
@@ -61,7 +64,6 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
             }
             $diskCloneSpec.vmDiskUuid = $diskImage.vmDiskId
         }
-        if($diskImage){$diskCloneSpec.vmDiskUuid = $diskImage.vmDiskId}
         else{
             Write-Warning "Specified Image Name: $ImageName, does not exist in the Image Store, exiting"
             Break
@@ -138,11 +140,11 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
     }
 
     #Create the VM
-    Write-Host "Creating $VMName on $($connection.server)..."
+    Write-Host "Creating $VMName on $ClusterName..."
     $createJobID = New-NTNXVirtualMachine -MemoryMb $ramMB -Name $VMName -NumVcpus $VMVcpus -NumCoresPerVcpu $VMCoresPerVcpu -VmNics $nicSpec -VmDisks $vmDisk -Description $Description -ErrorAction Continue
-    if($createJobID){Write-Host "Created $VMName on $($connection.server)" -ForegroundColor Green}
+    if($createJobID){Write-Host "Created $VMName on $ClusterName" -ForegroundColor Green}
     else{
-        Write-Warning "Couldn't create $VMName on $($connection.server), exiting"
+        Write-Warning "Couldn't create $VMName on $ClusterName, exiting"
         Break
     }
     #now wait for the VM to be created and then power it on, unless noPowerOn, then we are done
@@ -157,11 +159,11 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
         }
         #now power on the VM
         if ($VMidToPowerOn){
-            Write-Host "Powering on $VMName on $($connection.server)..."
+            Write-Host "Powering on $VMName on $ClusterName..."
             $poweronJobID = Set-NTNXVMPowerOn -Vmid $VMidToPowerOn
-            if($poweronJobID){Write-Host "Successfully powered on $VMName on $($connection.server)" -ForegroundColor Green}
+            if($poweronJobID){Write-Host "Successfully powered on $VMName on $ClusterName" -ForegroundColor Green}
             else{
-                Write-Warning "Couldn't power on $VMName on $($connection.server), exiting"
+                Write-Warning "Couldn't power on $VMName on $ClusterName, exiting"
                 Break
             }
         }
@@ -172,6 +174,6 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
     }
 }
 else{
-    Write-Host "$VMName already exists on $($connection.server), exiting"
+    Write-Host "$VMName already exists on $ClusterName, exiting"
     Break
 }

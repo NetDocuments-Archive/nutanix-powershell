@@ -5,9 +5,12 @@ param(
     [Parameter(mandatory=$false)][String]$ClusterName
 )
 #dot source Connect-Nutanix.ps1 and connect to the cluster
-. .\Connect-Nutanix.ps1
+. .\lib\Connect-Nutanix.ps1
 if ($ClusterName){ $connection = (Connect-Nutanix -ClusterName $ClusterName) }
-else { $connection = (Connect-Nutanix) }
+else {
+    $connection = (Connect-Nutanix)
+    $ClusterName = (Get-NutanixCluster).server
+}
 if (!$connection){
     Write-Warning "Couldn't connect to a Nutanix Cluster"
     exit 1
@@ -16,15 +19,15 @@ if (!$connection){
 #check to make sure VM exists on the cluster
 $VM = (Get-NTNXVM -SearchString $VMName)
 if ($VM.vmid){
-    Write-Host "Removing $VMName from $($connection.server)"
+    Write-Host "Removing $VMName from $ClusterName"
     $removeVMJobID = Remove-NTNXVirtualMachine -vmid $VM.vmid
     #make sure the job to remove the VM got submitted
-    if($removeVMJobID){Write-Host "Successfully removed $VMName from $($connection.server)" -ForegroundColor Green}
+    if($removeVMJobID){Write-Host "Successfully removed $VMName from $ClusterName" -ForegroundColor Green}
     else{
-        Write-Warning "Failed to remove $VMName from $($connection.server), exiting"
+        Write-Warning "Failed to remove $VMName from $ClusterName, exiting"
         Break
     }
 }
 else{
-      Write-Host "$VMName does not exist on $($connection.server), exiting"
+      Write-Host "$VMName does not exist on $ClusterName, exiting"
 }
