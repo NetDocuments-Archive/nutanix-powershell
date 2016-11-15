@@ -1,4 +1,5 @@
 #Connect-Nutanix.ps1
+#   Copyright 2016 NetVoyage Corporation d/b/a NetDocuments.
 function Connect-Nutanix {
     param(
         [parameter(mandatory=$false)]$ClusterName
