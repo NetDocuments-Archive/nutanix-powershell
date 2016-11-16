@@ -24,10 +24,10 @@ if ($VM.vmid){
     #make sure the job to remove the VM got submitted
     if($removeVMJobID){Write-Host "Successfully removed $VMName from $ClusterName" -ForegroundColor Green}
     else{
-        Write-Warning "Failed to remove $VMName from $ClusterName, exiting"
+        Write-Warning "Failed to remove $VMName from $ClusterName"
         Break
     }
 }
 else{
-      Write-Host "$VMName does not exist on $ClusterName, exiting"
+      Write-Host "$VMName does not exist on $ClusterName"
 }
