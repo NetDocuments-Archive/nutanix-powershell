@@ -87,7 +87,7 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
     elseif($UseBlankDisk){
         #setup the new disk on the default container
         $diskCreateSpec = New-NTNXObject -Name VmDiskSpecCreateDTO
-        $diskCreateSpec.containerUuid = (Get-NTNXContainer).containerUuid
+        $diskCreateSpec.containerUuid = (Get-NTNXContainer -SearchString "default").containerUuid
         $diskCreateSpec.sizeMb = $DiskSizeGB * 1024
         #create the Disk
         $vmDisk.vmDiskCreate = $diskCreateSpec
