@@ -131,7 +131,7 @@ if (!(Get-NTNXVM -SearchString $VMName).vmid){
         if(!($vmDisk[1])){$vmDisk = @($vmDisk)}
         foreach($volume in $AdditionalVolumes){
             $diskCreateSpec = New-NTNXObject -Name VmDiskSpecCreateDTO
-            $diskCreateSpec.containerUuid = (Get-NTNXContainer).containerUuid
+            $diskCreateSpec.containerUuid = (Get-NTNXContainer -SearchString "default").containerUuid
             $diskCreateSpec.sizeMb = $volume.Size * 1024
             $AdditionalvmDisk = New-NTNXObject -Name VMDiskDTO
             $AdditionalvmDisk.vmDiskCreate = $diskCreateSpec
