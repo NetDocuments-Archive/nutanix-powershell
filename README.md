@@ -24,4 +24,4 @@ Throw all the "test" VMs away.
 .\Destroy-NTNXVM.ps1 -VMName "test03"
 .\Destroy-NTNXVM.ps1 -VMName "test04"
 ````
-Copyright 2016 NetVoyage Corporation d/b/a NetDocuments.
+Copyright 2017 NetDocuments Ltd.
